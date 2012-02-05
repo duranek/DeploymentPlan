@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DeploymentPlan" default="compile" basedir=".">
+	<description>
+        Build file. This is used to package up your project as a war, if you
+        want to distribute/deploy it. This isn't needed for normal operation.
+    </description>
+
+	<property file="build.number" />
+
+	<!-- GWT properties - change these to suit your distribution (i.e. windows, mac or linux) -->
+	<property name="gwt.home" value="D:\dev2\gwt-2.4.0" />
+	<property name="smartgwt.home" value="D:\dev2\smartgwt-3.0" />
+	<property name="tomcat.home" value="D:\dev2\apache-tomcat-6.0.20" />
+
+	<!-- Build properties - shouldn't need changing -->
+	<property name="name" value="DeploymentPlan" />
+	<property name="module" value="com.deploymentplan.DeploymentPlan" />
+	<property name="src.dir" value="src" />
+	<property name="web.dir" value="war" />
+	<property name="lib.dir" value="${web.dir}/WEB-INF/lib" />
+	<property name="bin.dir" value="${web.dir}/WEB-INF/classes" />
+	<property name="test.dir" value="test" />
+	<property name="dist.dir" value="dist" />
+
+	<!-- set classpath -->
+	<path id="project.class.path">
+		<pathelement path="${java.class.path}/" />
+		<pathelement path="${lib.dir}/gwt-servlet.jar" />
+		<pathelement path="${lib.dir}/commons-logging-1.1.1.jar" />
+		<pathelement path="${lib.dir}/ibatis-2.3.4.726.jar" />
+		<pathelement path="${lib.dir}/mysql-connector-java-5.1.10-bin.jar" />
+		<pathelement path="${lib.dir}/org.springframework.beans-3.1.0.RELEASE.jar" />
+		<pathelement path="${lib.dir}/org.springframework.web-3.1.0.RELEASE.jar" />
+		<pathelement path="${lib.dir}/org.springframework.web.servlet-3.1.0.RELEASE.jar" />
+	</path>
+
+	<target name="clean">
+		<delete file="${dist.dir}/${name}.war" />
+		<!-- Delete the bin directory tree -->
+		<delete>
+			<fileset dir="${bin.dir}" includes="**/*.class" />
+		</delete>
+	</target>
+	<target name="compile" description="Compile both client &amp; server code">
+		<!-- cross-compile client-side java classes -->
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement location="${src.dir}" />
+				<pathelement location="${gwt.home}/gwt-user.jar" />
+				<pathelement location="${gwt.home}/gwt-dev.jar" />
+				<pathelement location="${gwt.home}\validation-api-1.0.0.GA.jar" />
+				<pathelement location="${gwt.home}\validation-api-1.0.0.GA-sources.jar" />
+				<pathelement location="${smartgwt.home}\smartgwt.jar" />
+				<pathelement location="${smartgwt.home}\smartgwt-skins.jar" />
+			</classpath>
+			<!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+			<jvmarg value="-Xmx256M" />
+			<arg line="-war" />
+			<arg value="war" />
+			<!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+			<arg value="com.deploymentplan.DeploymentPlan" />
+		</java>
+
+		<!-- compile server-side java classes -->
+		<mkdir dir="${web.dir}/WEB-INF/classes" />
+		<javac srcdir="${src.dir}" destdir="${bin.dir}" includes="**" debug="on" debuglevel="lines,vars,source" source="1.5">
+			<classpath refid="project.class.path" />
+		</javac>
+	</target>
+
+	<target name="compileANDpackage" depends="compile" description="Package up the project as a war">
+		<mkdir dir="${dist.dir}" />
+		<war destfile="${dist.dir}/${name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="WEB-INF/web.xml" />
+			</fileset>
+		</war>
+	</target>
+	
+	<target name="compileANDpackageANDdeploy" depends="compile,package,deploy" description="Package up the project as a war">
+
+	</target>
+
+	<target name="package" description="Package up the project as a war">
+		<mkdir dir="${dist.dir}" />
+		<war destfile="${dist.dir}/${name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="WEB-INF/web.xml" />
+			</fileset>
+		</war>
+	</target>
+
+	<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" />
+	<taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" />
+
+	<target name="deploy">
+		<deploy url="http://localhost:8080/manager" username="admin" password="admin" path="/${name}" update="true" localWar="${basedir}/${dist.dir}/${name}.war" />
+	</target>
+
+	<target name="undeploy">
+		<antcall target="tomcat-stop" />
+		<antcall target="forceDeleteProjectFromTomcat" />
+		<exec executable="${tomcat.home}/bin/startup.bat" />
+	</target>
+
+	<target name="forceDeleteProjectFromTomcat">
+		<delete dir="${tomcat.home}/webapps/${name}" />
+		<delete file="${tomcat.home}/webapps/${name}.war" />
+	</target>
+
+	<target name="tomcat-start-external">
+		<exec executable="${tomcat.home}/bin/startup.bat" />
+	</target>
+
+
+	<target name="tomcat-start">
+		<java jar="${tomcat.home}/bin/bootstrap.jar" fork="true">
+			<jvmarg value="-Dcatalina.home=${tomcat.home}" />
+		</java>
+	</target>
+
+
+	<target name="tomcat-stop">
+		<java jar="${tomcat.home}/bin/bootstrap.jar" fork="true">
+			<jvmarg value="-Dcatalina.home=${tomcat.home}" />
+			<arg line="stop" />
+		</java>
+	</target>
+
+	<target name="all" depends="package" />
+
+</project>

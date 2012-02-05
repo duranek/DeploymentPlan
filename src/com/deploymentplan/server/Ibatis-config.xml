@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMapConfig
+PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+	<!-- Always ensure to use the correct XML header as above! -->
+<sqlMapConfig>
+	<settings cacheModelsEnabled="true" enhancementEnabled="true"
+		lazyLoadingEnabled="true" maxRequests="128" maxSessions="10"
+		maxTransactions="5" useStatementNamespaces="false"
+		defaultStatementTimeout="5" />
+	<transactionManager type="JDBC">
+		<dataSource type="SIMPLE">
+			<property name="JDBC.Driver" value="com.mysql.jdbc.Driver" />
+			<property name="JDBC.ConnectionURL"
+				value="jdbc:mysql://localhost:3306/deploymentplan?useUnicode=true&amp;characterEncoding=utf8" />
+			<property name="JDBC.Username" value="dp" />
+			<property name="JDBC.Password" value="dp1234" />
+			<property name="JDBC.DefaultAutoCommit" value="false" />
+			<property name="Pool.MaximumActiveConnections" value="10" />
+			<property name="Pool.MaximumIdleConnections" value="5" />
+			<property name="Pool.MaximumCheckoutTime" value="120000" />
+			<property name="Pool.TimeToWait" value="500" />
+			<property name="Pool.PingQuery" value="select 1 from ACCOUNT" />
+			<property name="Pool.PingEnabled" value="false" />
+			<property name="Pool.PingConnectionsOlderThan" value="1" />
+			<property name="Pool.PingConnectionsNotUsedFor" value="1" />
+		</dataSource>
+	</transactionManager>
+	<sqlMap resource="com/deploymentplan/domain/user/User.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/ProdDeployment.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/DevDeployment.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/DeployItemTypes.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/DevDeploymentTree.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/ProdDeploymentTree.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/OtherTaskTypes.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/DevOtherTaskTree.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/ProdOtherTaskTree.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/ProdStatus.xml"/>
+	<sqlMap resource="com/deploymentplan/domain/KYSCommentForDevType.xml"/>
+</sqlMapConfig>

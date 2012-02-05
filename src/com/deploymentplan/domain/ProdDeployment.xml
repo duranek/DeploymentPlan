@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProdDeployment">
+	<cacheModel id="prodDeploymentCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="ProdDeployment" type="com.deploymentplan.domain.ProdDeployment" />
+	<resultMap id="ProdDeploymentResultFull" class="ProdDeployment">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="deployed" column="deployed" />
+		<result property="deleted" column="deleted" />
+		<result property="ownerId" column="ownerid" />
+		<result property="date" column="date" />
+	</resultMap>
+	<resultMap id="ProdDeploymentResultExtended" class="ProdDeployment">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="deployed" column="deployed" />
+		<result property="deleted" column="deleted" />
+		<result property="ownerId" column="ownerid" />
+		<result property="date" column="date" />
+		<result property="cebflowId" column="cebflowid" />
+		<result property="infoOwnerName" column="infoownername" />
+		<result property="deployDate" column="deploydate" />
+	</resultMap>
+	<resultMap id="ProdDeploymentTransferOthersList" class="ProdDeployment">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>
+	<select id="searchProdDeployments" parameterClass="ProdDeployment"
+		resultClass="java.util.HashMap">
+		select d.*,u.name as owner,prdstat.name as prodstatusname
+		from proddeployment
+		d,users u,prodstatus prdstat
+		where d.name like '%$keyList$%'
+		and d.deleted=0
+		and
+		d.deployed=#deployed#
+		and u.id=d.ownerid
+		and prdstat.id=d.prodstatus
+		order by d.id desc
+	</select>
+	<select id="getTransferOthersProdList" parameterClass="ProdDeployment"
+		resultMap="ProdDeploymentTransferOthersList">
+		select
+		d.id,d.name
+		from proddeployment
+		d
+		where d.deleted=0
+		and
+		d.deployed=0
+		and d.id<![CDATA[ <> ]]>#id#
+		order
+		by d.id desc
+	</select>
+	<select id="OldsearchProdDeployments" parameterClass="ProdDeployment"
+		resultMap="ProdDeploymentResultExtended">
+		select d.*,u.name as infoownername
+		from proddeployment
+		d,users u
+		where
+		<iterate property="keyList" removeFirstPrepend="false"
+			conjunction="true">
+			d.name like '%$keyList[]$%'
+		</iterate>
+		and d.deleted=0
+		and d.deployed=#deployed#
+		and u.id=d.ownerid
+		order by
+		d.name asc
+	</select>
+	<select id="getProdDeploymentByName" parameterClass="ProdDeployment"
+		resultMap="ProdDeploymentResultFull">
+		select * from proddeployment where name=#name# and
+		deleted=0
+	</select>
+	<select id="getProdDeployment" parameterClass="ProdDeployment"
+		resultMap="ProdDeploymentResultFull">
+		select * from proddeployment where id=#id# and
+		deleted=0
+	</select>
+	<select id="refreshUserRanks" resultClass="java.util.HashMap">
+		SELECT T.*,ranktype.title FROM (
+		select u.name as username,
+		COUNT(*) as countfororder,
+		CONVERT(COUNT(*),char(10)) as count,
+		CONVERT(FLOOR(count(*)/10)+1,char(10)) as rank
+		from proddeployment prod,
+		users u
+		where prod.deleted=0
+		and prod.deployed=1
+		and u.id=prod.ownerid
+		GROUP BY u.id,u.name
+		) T,ranktypes ranktype
+		WHERE ranktype.id=T.rank
+		ORDER BY T.countfororder desc
+	</select>
+	<select id="refreshUserComponentKnowledge" resultClass="java.util.HashMap">
+		SELECT T.*,ranktype.title FROM (
+		select u.name as username,
+		COUNT(DISTINCT devtree.name) as countfororder,
+		CONVERT(COUNT(DISTINCT devtree.name),char(10)) as count ,
+		CONVERT(FLOOR(COUNT(DISTINCT devtree.name)/20)+1,char(10)) as rank
+		from
+		devdeploymenttree devtree,
+		devdeployment dev,
+		users u
+		where devtree.deleted=0
+		and devtree.itemtype=3
+		and dev.id=devtree.devdeploymentid
+		and u.id=dev.ownerid
+		GROUP BY u.id,u.name
+		) T,compknowledgeranktypes ranktype
+		WHERE ranktype.id=T.rank
+		ORDER BY T.countfororder desc
+	</select>
+	<select id="getBulkDeploymentDependentProjects" parameterClass="ProdDeployment"
+		resultMap="ProdDeploymentResultFull">
+		SELECT prodothers.* FROM proddeployment prod,
+		proddeploymenttree prodtree,
+		proddeploymenttree prodtreeothers,
+		proddeployment prodothers
+		WHERE prod.id=#id#
+		AND prod.deleted=0
+		AND prod.deployed=0
+		AND prodtree.proddeploymentid=prod.id
+		AND prodtree.itemtype=1
+		AND prodtree.deleted=0
+		AND prodtreeothers.name=prodtree.name
+		AND prodtreeothers.itemtype=1
+		AND prodtreeothers.deleted=0
+		AND prodtreeothers.proddeploymentid<![CDATA[ <> ]]>prod.id
+		AND prodothers.id=prodtreeothers.proddeploymentid
+		AND prodothers.deleted=0
+		AND prodothers.deployed=0
+	</select>
+	<insert id="addProdDeployment" parameterClass="ProdDeployment">
+		INSERT INTO
+		proddeployment(name,ownerid,date,cebflowid,prodstatus)
+		VALUES(
+		#name#,#ownerId#,#date#,#cebflowId#,#prodStatus#)
+	</insert>
+	<update id="deleteProdDeployment" parameterClass="ProdDeployment">
+		UPDATE
+		proddeployment set deleted=1 WHERE id=#id# 
+	</update>
+	<update id="updateProdDeployment" parameterClass="ProdDeployment">
+		UPDATE
+		proddeployment set name=#name#,cebflowid=#cebflowId#,prodstatus=#prodStatus# WHERE id=#id#
+	</update>
+	<update id="deployProdDeployment" parameterClass="ProdDeployment">
+		UPDATE
+		proddeployment set deployed=#deployed#,deploydate=now()
+		WHERE id=#id#
+	</update>
+	<update id="undeployProdDeployment" parameterClass="ProdDeployment">
+		UPDATE
+		proddeployment set deployed=#deployed#,deploydate=null
+		WHERE id=#id#
+	</update>
+</sqlMap>

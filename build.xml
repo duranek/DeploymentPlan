@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Deploy From Eclipse to Tomcat" basedir=".">
+	<property name="warfile" value="deploymentplan" />
+	<target name="unpack">
+		<unwar src="${warfile}.war" dest="${warfile}" />
+	</target>
+	<target name="create">
+		<war destfile="${warfile}.war" webxml="war/WEB-INF/web.xml" update="true">
+			<fileset dir="war"/>
+		</war>
+	</target>
+	<target name="copy">
+		<copy todir="c:\tomcat5517\webapps" overwrite="true">
+			<fileset dir=".">
+				<include name="*.war" />
+			</fileset>
+		</copy>
+	</target>
+	<target name="deploy">
+		<antcall target="create" />
+		<antcall target="copy" />
+	</target>
+</project>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DevOtherTaskTree">
+	<cacheModel id="DevOtherTaskTreeCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="DevOtherTaskTree" type="com.deploymentplan.domain.DevOtherTaskTree" />
+	<resultMap id="ResultFull" class="DevOtherTaskTree">
+		<result property="id" column="id" />
+		<result property="parentId" column="parentid" />
+		<result property="shortDescription" column="shortdescription" />
+		<result property="explanation" column="explanation" />
+		<result property="devDeploymentId" column="devdeploymentid" />
+		<result property="deleted" column="deleted" />
+	</resultMap>
+	<select id="getDevOtherTaskTreeInSameDeployment" parameterClass="DevOtherTaskTree"
+		resultMap="ResultFull">
+		select * from
+		devothertasktree
+		where
+		devdeploymentid=#devDeploymentId#
+		and
+		shortdescription=#shortDescription#
+		and
+		deleted=0
+		order by
+		shortdescription asc
+	</select>
+	<select id="getDevOtherTaskTree" parameterClass="DevOtherTaskTree"
+		resultMap="ResultFull">
+		select * from
+		devothertasktree
+		where
+		id=#id#
+		and
+		deleted=0
+	</select>
+	<select id="getDevOtherTaskList" parameterClass="DevOtherTaskTree"
+		resultMap="ResultFull">
+		select * from
+		devothertasktree
+		where
+		devdeploymentid=#devDeploymentId#
+		and
+		deleted=0
+		order by shortdescription
+		asc
+	</select>
+	<select id="getDevChildOtherTaskTree" parameterClass="DevOtherTaskTree"
+		resultMap="ResultFull">
+		select * from devothertasktree where parentid=#id# and
+		deleted=0 
+	</select>
+	<insert id="addDevOtherTask" parameterClass="DevOtherTaskTree">
+		<selectKey keyProperty="id" type="post" resultClass="int">
+			SELECT
+			LAST_INSERT_ID() AS value
+		</selectKey>
+		INSERT INTO
+		devothertasktree(parentid,shortdescription,explanation,devdeploymentid)
+		VALUES(
+		#parentId#,#shortDescription#,#explanation#,#devDeploymentId#)
+	</insert>
+	<update id="deleteDevOtherTaskTree" parameterClass="DevOtherTaskTree">
+		UPDATE
+		devothertasktree set deleted=1 WHERE id=#id#
+	</update>
+	<update id="transferAllDevOtherTasksTreeToNewDev"
+		parameterClass="java.util.HashMap">
+		UPDATE devothertasktree devot , proddeployment prod, devdeployment dev 
+		set devot.devdeploymentid=#toDev# 
+		WHERE prod.id=#fromProd#
+		and prod.deleted=0
+		and dev.proddeploymentid=prod.id
+		and dev.deleted=0
+		and devot.devdeploymentid=dev.id
+		and devot.deleted=0
+	</update>
+</sqlMap>

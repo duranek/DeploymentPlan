@@ -1,0 +1,111 @@
+/** Add css rules here for your application. */
+
+
+/** Example rules used by the template application (remove for your app) */
+h1 {
+  font-size: 2em;
+  font-weight: bold;
+  color: #777777;
+  margin: 40px 0px 70px;
+  text-align: center;
+}
+
+.sendButton {
+  display: block;
+  font-size: 16pt;
+}
+
+/** Most GWT widgets already have a style name defined */
+.gwt-DialogBox {
+  width: 400px;
+}
+
+.dialogVPanel {
+  margin: 5px;
+}
+
+.serverResponseLabelError {
+  color: red;
+}
+
+/** Set ids using widget.getElement().setId("idOfElement") */
+#closeButton {
+  margin: 15px 6px 6px;
+}
+
+.highlightgrid,
+.highlightgridDark
+ {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #ffc0c0; border-top:1px solid #ffc0c0;
+    background-color:#ffc0c0;
+}
+
+.highlightgridOver,
+.highlightgridOverDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #c0c0c0; border-top:1px solid #c0c0c0;
+    background-color:#ffe0e0;
+}
+.highlightgridSelected,
+.highlightgridSelectedDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #ffc0ff; border-top:1px solid #ffc0ff;
+    background-color:#ffc0ff;
+}
+.highlightgridSelectedOver,
+.highlightgridSelectedOverDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-top:1px solid #a0a0a0;
+    background-color:#ffe0ff;
+}
+.highlightgridDisabled,
+.highlightgridDisabledDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:#808080;
+    border-bottom:1px solid #ffc0c0; border-top:1px solid #ffc0c0;
+    background-color:#ffc0c0;
+}
+
+
+.conflictgrid,
+.conflictgridDark
+ {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #ffc0c0; border-top:1px solid #ffc0c0;
+    background-color:#FF9900;
+}
+
+.conflictgridOver,
+.conflictgridOverDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #c0c0c0; border-top:1px solid #c0c0c0;
+    background-color:#FF9999;
+}
+.conflictgridSelected,
+.conflictgridSelectedDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #ffc0ff; border-top:1px solid #ffc0ff;
+    background-color:#FF9900;
+}
+.conflictgridSelectedOver,
+.conflictgridSelectedOverDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-top:1px solid #a0a0a0;
+    background-color:#FF9900;
+}
+.conflictgridDisabled,
+.conflictgridDisabledDark {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; text-overflow:ellipsis;
+    color:#808080;
+    border-bottom:1px solid #ffc0c0; border-top:1px solid #ffc0c0;
+    background-color:#FF9999;
+}

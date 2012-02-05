@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+
+<web-app>
+	<!-- Servlets -->
+	<servlet>
+		<servlet-name>DatabaseService</servlet-name>
+		<servlet-class>
+			com.deploymentplan.server.DPServiceImpl</servlet-class>
+	</servlet>
+
+	<!-- Initialise the Spring MVC DispatcherServlet -->
+	<servlet>
+		<servlet-name>spring</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>DatabaseService</servlet-name>
+		<url-pattern>/deploymentplan/databaseservice</url-pattern>
+	</servlet-mapping>
+
+	<!-- <servlet> -->
+	<!-- <servlet-name>loginwindowservice</servlet-name> -->
+	<!-- <servlet-class> -->
+	<!-- com.deploymentplan.server.user.LoginWindowImpl</servlet-class> -->
+	<!-- </servlet> -->
+
+	<!-- <servlet-mapping> -->
+	<!-- <servlet-name>loginwindowservice</servlet-name> -->
+	<!-- <url-pattern>/deploymentplan/loginwindowservice</url-pattern> -->
+	<!-- </servlet-mapping> -->
+
+	<!-- Map the DispatcherServlet to only intercept RPC requests -->
+	<servlet-mapping>
+		<servlet-name>spring</servlet-name>
+		<url-pattern>/deploymentplan/login.rpc</url-pattern>
+	</servlet-mapping>
+
+
+	<!-- Default page to serve -->
+	<welcome-file-list>
+		<welcome-file>DeploymentPlan.html</welcome-file>
+	</welcome-file-list>
+
+
+</web-app>

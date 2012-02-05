@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="KYSCommentForDevType">
+	<cacheModel id="KYSCommentForDevTypeCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="KYSCommentForDevType" type="com.deploymentplan.domain.KYSCommentForDevType" />
+	<resultMap id="KYSCommentForDevTypeResultFull" class="KYSCommentForDevType">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>	
+	<select id="refreshKYSCommentForDevType" parameterClass="KYSCommentForDevType" resultMap="KYSCommentForDevTypeResultFull">
+		select id,name from kyscommentfordevtype order by name asc
+	</select>
+</sqlMap>

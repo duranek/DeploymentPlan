@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DevDeploymentTree">
+	<cacheModel id="DevDeploymentTreeCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="DevDeploymentTree"
+		type="com.deploymentplan.domain.DevDeploymentTree" />
+	<resultMap id="TreeResultDev" class="DevDeploymentTree">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="parentId" column="parentid" />
+	</resultMap>
+	<resultMap id="DevDeploymentTreeResultFull" class="DevDeploymentTree">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="parentId" column="parentid" />
+		<result property="devDeploymentId" column="devdeploymentid" />
+		<result property="itemType" column="itemtype" />
+		<result property="deleted" column="deleted" />
+		<result property="datetime" column="datetime" />
+	</resultMap>
+	<resultMap id="GridResult" class="DevDeploymentTree">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>
+	<select id="getDevDeploymentTreeItemListInSameProd"
+		parameterClass="java.util.HashMap" resultMap="DevDeploymentTreeResultFull">
+		select item.* from
+		devdeploymenttree component,
+		devdeploymenttree itemtype,
+		devdeploymenttree item,
+		devdeployment dd
+		where
+		dd.proddeploymentid=#prodDeploymentId#
+		and dd.deleted=0
+		and
+		component.devdeploymentid=dd.id
+		and component.name=#componentName#
+		and
+		component.parentId=-1
+		and component.deleted=0
+		and component.itemtype=1
+		and itemtype.parentid=component.id
+		and itemtype.name=#itemTypeName#
+		and
+		itemtype.deleted=0
+		and itemtype.itemtype=2
+		and item.parentid=itemtype.id
+		and item.deleted=0
+		and item.name=#itemName#
+		and item.itemtype=3
+		order by
+		name asc
+	</select>
+	<select id="generateKYSCommentForDev" parameterClass="DevDeploymentTree"
+		resultClass="java.lang.String">
+		select DISTINCT CONCAT('[',prod.name,']') from
+		devdeploymenttree d,
+		devdeploymenttree component,
+		devdeployment dev,
+		proddeployment prod,
+		devdeployment mydev,
+		proddeployment myprod
+		where d.id=#id#
+		and d.deleted=0
+		and d.itemtype=#itemType#
+		and component.name=d.name
+		and component.deleted=0
+		and component.itemtype=d.itemtype
+		and dev.id=component.devdeploymentid
+		and dev.deleted=0
+		and dev.deployed=1
+		and prod.id=dev.proddeploymentid
+		and prod.deleted=0
+		and prod.deployed=0
+		and mydev.id=d.devdeploymentid
+		and mydev.deleted=0
+		and myprod.id=mydev.proddeploymentid
+		and myprod.deleted=0
+		and myprod.id<![CDATA[ <> ]]>prod.id
+	</select>		
+	<select id="generateKYSCommentForDevOLD" parameterClass="DevDeploymentTree"
+		resultClass="java.lang.String">
+		select DISTINCT CONCAT('[',prod.name,']') from
+		devdeploymenttree d,devdeploymenttree component,devdeployment
+		dev,proddeployment prod
+		where d.id=#id#
+		and d.deleted=0
+		and d.itemtype=1
+		and component.name=d.name
+		and component.deleted=0
+		and
+		component.itemtype=1
+		and dev.id=component.devdeploymentid
+		and
+		dev.deleted=0
+		and prod.id=dev.proddeploymentid
+		and prod.deleted=0
+		and
+		prod.deployed=0
+	</select>
+	<select id="getDevDeploymentTreeInSameDeployment"
+		parameterClass="DevDeploymentTree" resultMap="DevDeploymentTreeResultFull">
+		select * from
+		devdeploymenttree
+		where devdeploymentid=#devDeploymentId#
+		and
+		name=#name#
+		and
+		parentId=#parentId#
+		and deleted=0
+		order by name asc
+	</select>
+	<select id="getDevDeploymentTreeItemListInOtherDeployment"
+		parameterClass="DevDeploymentTree" resultMap="DevDeploymentTreeResultFull">
+		select * from
+		devdeploymenttree
+		where name=#name#
+		and parentid=#parentId#
+		and
+		itemtype=3
+		and deleted=0
+		order by name asc
+	</select>
+	<select id="getDevDeploymentTree" parameterClass="DevDeploymentTree"
+		resultMap="DevDeploymentTreeResultFull">
+		select * from devdeploymenttree where id=#id# and deleted=0
+	</select>
+	<select id="getDevChildItems" parameterClass="DevDeploymentTree"
+		resultMap="DevDeploymentTreeResultFull">
+		select * from devdeploymenttree where parentid=#id# and
+		deleted=0 
+	</select>
+	<select id="getDevDeploymentTreeList" parameterClass="DevDeploymentTree"
+		resultClass="java.util.HashMap">
+	select dtree.*, 
+CAST( (SELECT COUNT(*) FROM devdeploymenttree item,
+devdeployment dev,
+proddeployment prod,
+devdeploymenttree item2,
+devdeployment dev2,
+proddeployment prod2
+WHERE item.id=dtree.id
+and item.deleted=0
+and item.itemtype=3
+and dev.id=item.devdeploymentid
+and dev.deleted=0
+and prod.id=dev.proddeploymentid
+and prod.deleted=0
+and item2.name=item.name
+and item2.deleted=0
+and item2.id<![CDATA[ <> ]]>item.id
+and item2.itemtype=3
+and dev2.id=item2.devdeploymentid
+and dev2.deleted=0
+and prod2.id=dev2.proddeploymentid
+and prod2.deleted=0
+and prod2.deployed=0 
+and prod.id<![CDATA[ <> ]]>prod2.id
+) AS CHAR) as conflict
+	from devdeploymenttree dtree
+	where devdeploymentid=#devDeploymentId# 
+	and 	deleted=0 
+	</select>
+	<select id="checkWarningSameComponent" parameterClass="DevDeploymentTree"
+		resultClass="java.util.HashMap">
+		select DISTINCT CONCAT(otherComponentsProd.name,' (',u.name,')') as
+		deployment
+		from
+		devdeploymenttree selectedComponent,
+		devdeployment
+		selectedComponentDev,
+		devdeploymenttree otherComponents,
+		devdeployment
+		otherComponentsDev,
+		proddeployment otherComponentsProd,
+		users u
+		where
+		selectedComponent.id=#id#
+		and selectedComponent.deleted=0
+		and
+		selectedComponent.itemtype=1
+		and
+		selectedComponentDev.id=selectedComponent.devdeploymentid
+		and
+		selectedComponentDev.deleted=0
+		and
+		otherComponents.name=selectedComponent.name
+		and
+		otherComponents.deleted=0
+		and otherComponents.itemtype=1
+		and
+		otherComponents.id<![CDATA[ <> ]]>selectedComponent.id
+		and otherComponentsDev.id=otherComponents.devdeploymentid
+		and
+		otherComponentsDev.id<![CDATA[ <> ]]>selectedComponent.devdeploymentid
+		and otherComponentsDev.deleted=0
+		and otherComponentsDev.deployed=1
+		and
+		otherComponentsProd.id=otherComponentsDev.proddeploymentid
+		and
+		otherCOmponentsProd.id<![CDATA[ <> ]]>selectedComponentDev.proddeploymentid
+		and otherComponentsProd.deleted=0
+		and otherComponentsProd.deployed=0
+		and u.id=otherComponentsDev.ownerId
+	</select>
+	<select id="checkWarningSameItem" parameterClass="DevDeploymentTree"
+		resultClass="java.util.HashMap">
+		select DISTINCT CONCAT(selectedComponent.name,' \\
+		',itemcathegory.name,' \\ ',item.name,' (',u.name,')') as item
+		from
+		devdeploymenttree selectedComponent,
+		devdeployment
+		selectedComponentDev,
+		devdeploymenttree itemcathegory,
+		devdeploymenttree item,
+		devdeploymenttree otherItems,
+		devdeployment dev,
+		proddeployment prod,
+		users u
+		where selectedComponent.id=#id#
+		and
+		selectedComponent.deleted=0
+		and selectedComponent.itemtype=1
+		and
+		selectedComponentDev.id=selectedComponent.devdeploymentid
+		and
+		selectedComponentDev.deleted=0
+		and
+		itemcathegory.parentid=selectedComponent.id
+		and itemcathegory.deleted=0
+		and itemcathegory.itemtype=2
+		and item.parentid=itemcathegory.id
+		and
+		item.deleted=0
+		and item.itemtype=3
+		and otherItems.name=item.name
+		and
+		otherItems.deleted=0
+		and otherItems.itemtype=3
+		and otherItems.id<![CDATA[ <> ]]>item.id
+		and dev.id=otherItems.devdeploymentid
+		and dev.id<![CDATA[ <> ]]>selectedComponent.devdeploymentid
+		and dev.deleted=0
+		and dev.deployed=1
+		and prod.id<![CDATA[ <> ]]>selectedComponentDev.proddeploymentid
+		and prod.id=dev.proddeploymentid
+		and prod.deleted=0
+		and prod.deployed=0
+		and u.id=dev.ownerId
+	</select>
+	<select id="getLastChangedDateOfSessionUserItemOfComponent"
+		parameterClass="java.util.HashMap" resultMap="DevDeploymentTreeResultFull">
+		select
+		item.*
+		from
+		devdeploymenttree component,
+		devdeployment dev,
+		devdeploymenttree
+		itemtype,
+		devdeploymenttree item
+		where
+		component.deleted=0
+		and
+		component.name=#component#
+		and
+		dev.id=component.devdeploymentid
+		and
+		dev.deleted=0
+		and
+		dev.ownerid=#ownerid#
+		and
+		itemtype.parentid=component.id
+		and
+		itemtype.deleted=0
+		and
+		item.parentid=itemtype.id
+		and item.deleted=0
+		and
+		item.datetime>'2010-05-01'
+		and item.datetime=(
+		select
+		MAX(itemin.DATETIME)
+		from devdeploymenttree componentin,
+		devdeployment
+		devin,
+		devdeploymenttree itemtypein,
+		devdeploymenttree itemin
+		where
+		componentin.deleted=0
+		and componentin.name=#component#
+		and
+		devin.id=componentin.devdeploymentid
+		and devin.deleted=0
+		and
+		devin.ownerid=#ownerid#
+		and itemtypein.deleted=0
+		and
+		itemtypein.parentid=componentin.id
+		and itemin.deleted=0
+		and
+		itemin.parentid=itemtypein.id
+		and itemin.datetime>'2010-05-01'
+		)
+	</select>
+	<select id="getDeployedDevDeploymentComponentNameOfProdDeployment"
+		resultClass='java.util.HashMap' parameterClass='java.util.HashMap'>
+		SELECT DISTINCT case when DEVTREE.ITEMTYPE=2 then
+		CONCAT(IFNULL(DEVTREEPARENT.NAME,''),IFNULL(DEVTREE.NAME,'')) when DEVTREE.ITEMTYPE=3 then CONCAT(IFNULL(DEVTREEGRANDPARENT.NAME,''),IFNULL(DEVTREEPARENT.NAME,''),IFNULL(DEVTREE.NAME,'')) else
+		DEVTREE.NAME end as
+		id,CONCAT(IFNULL(DEVTREEGRANDPARENT.NAME,''),IFNULL(DEVTREEPARENT.NAME,''))
+		as parentid,DEVTREE.NAME as name FROM PRODDEPLOYMENT PROD,
+		DEVDEPLOYMENT DEV,
+		DEVDEPLOYMENTTREE DEVTREE LEFT JOIN DEVDEPLOYMENTTREE DEVTREEPARENT on
+		(DEVTREEPARENT.ID=DEVTREE.PARENTID AND DEVTREEPARENT.DELETED=0) LEFT
+		JOIN DEVDEPLOYMENTTREE DEVTREEGRANDPARENT on (
+		DEVTREEGRANDPARENT.ID=DEVTREEPARENT.parentid AND
+		DEVTREEGRANDPARENT.DELETED=0)
+		WHERE 1=1
+		<iterate prepend='AND' property='id' open='(' close=')'
+			conjunction='OR'>
+			PROD.id=#id[]#
+		</iterate>
+		AND PROD.DELETED=0
+		AND PROD.DEPLOYED=0
+		AND DEV.PRODDEPLOYMENTID=PROD.ID
+		AND DEV.DELETED=0
+		AND DEV.DEPLOYED=1
+		AND DEVTREE.devdeploymentid=DEV.id
+		AND DEVTREE.DELETED=0
+	</select>
+	<insert id="insertDevDeploymentTree" parameterClass="DevDeploymentTree">
+		<selectKey keyProperty="id" type="post" resultClass="int">
+			SELECT
+			LAST_INSERT_ID() AS value
+		</selectKey>
+		INSERT INTO
+		devdeploymenttree(name,devdeploymentid,parentId,itemtype,subitemtype,datetime)
+		VALUES(
+		#name#,#devDeploymentId#,#parentId#,#itemType#,#subItemType#,now())
+	</insert>
+	<update id="deleteDevDeploymentTree" parameterClass="DevDeploymentTree">
+		UPDATE
+		devdeploymenttree set deleted=1 WHERE id=#id#
+	</update>
+</sqlMap>

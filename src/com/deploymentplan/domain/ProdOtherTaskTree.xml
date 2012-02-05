@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProdOtherTaskTree">
+	<cacheModel id="ProdOtherTaskTreeCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="ProdOtherTaskTree"
+		type="com.deploymentplan.domain.ProdOtherTaskTree" />
+	<resultMap id="ResultFull" class="ProdOtherTaskTree">
+		<result property="id" column="id" />
+		<result property="parentId" column="parentid" />
+		<result property="shortDescription" column="shortdescription" />
+		<result property="explanation" column="explanation" />
+		<result property="prodDeploymentId" column="proddeploymentid" />
+		<result property="deleted" column="deleted" />
+		<result property="devOtherTaskTreeId" column="devothertasktreeid" />
+	</resultMap>
+	<select id="getProdOtherTaskTreeInSameDeployment"
+		parameterClass="ProdOtherTaskTree" resultMap="ResultFull">
+		select * from
+		prodothertasktree
+		where
+		proddeploymentid=#prodDeploymentId#
+		and
+		shortdescription=#shortDescription#
+		and
+		deleted=0
+		order by
+		shortdescription asc
+	</select>
+	<select id="getProdOtherTaskTree" parameterClass="ProdOtherTaskTree"
+		resultMap="ResultFull">
+		select * from
+		prodothertasktree
+		where
+		id=#id#
+		and
+		deleted=0
+	</select>
+	<select id="getProdOtherTaskList" parameterClass="ProdOtherTaskTree"
+		resultMap="ResultFull">
+		select * from
+		prodothertasktree
+		where
+		proddeploymentid=#prodDeploymentId#
+		and
+		deleted=0
+		order by
+		shortdescription
+		asc
+	</select>
+	<select id="getProdChildOtherTaskTree" parameterClass="ProdOtherTaskTree"
+		resultMap="ResultFull">
+		select * from prodothertasktree where parentid=#id# and
+		deleted=0 
+	</select>
+	<select id="getProdOtherTaskTreeByDevID" parameterClass="ProdOtherTaskTree"
+		resultMap="ResultFull">
+		select * from prodothertasktree
+		where proddeploymentid=#prodDeploymentId#
+		and devothertasktreeid=#devOtherTaskTreeId#
+		and deleted=0 
+	</select>
+	<insert id="addProdOtherTask" parameterClass="ProdOtherTaskTree">
+		<selectKey keyProperty="id" type="post" resultClass="int">
+			SELECT
+			LAST_INSERT_ID() AS value
+		</selectKey>
+		INSERT INTO
+		prodothertasktree(parentid,shortdescription,explanation,proddeploymentid,devothertasktreeid)
+		VALUES(
+		#parentId#,#shortDescription#,#explanation#,#prodDeploymentId#,#devOtherTaskTreeId#)
+	</insert>
+	<update id="deleteProdOtherTaskTree" parameterClass="ProdOtherTaskTree">
+		UPDATE
+		prodothertasktree set deleted=1 WHERE id=#id#
+	</update>
+	<update id="transferAllProdOtherTasksTreeToNewProd"
+		parameterClass="java.util.HashMap">
+		UPDATE prodothertasktree prodot 
+		set prodot.proddeploymentid=#toProd# 
+		WHERE prodot.proddeploymentid=#fromProd#
+		and prodot.deleted=0
+	</update>	
+</sqlMap>

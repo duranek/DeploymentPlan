@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DevDeployment">
+	<cacheModel id="devDeploymentCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="DevDeployment" type="com.deploymentplan.domain.DevDeployment" />
+	<resultMap id="DevDeploymentResultFull" class="DevDeployment">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="ownerId" column="ownerid" />
+		<result property="deployed" column="deployed" />
+		<result property="deleted" column="deleted" />
+		<result property="prodDeploymentId" column="proddeploymentid" />
+		<result property="date" column="date" />
+		<result property="deployDate" column="deploydate" />
+	</resultMap>
+	<resultMap id="DevDeploymentResultExtended" class="DevDeployment">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="ownerId" column="ownerid" />
+		<result property="deployed" column="deployed" />
+		<result property="deleted" column="deleted" />
+		<result property="prodDeploymentId" column="proddeploymentid" />
+		<result property="infoOwnerName" column="ownername" />
+		<result property="date" column="date" />
+		<result property="deployDate" column="deploydate" />
+	</resultMap>
+	<select id="getDevDeployments" parameterClass="DevDeployment"
+		resultMap="DevDeploymentResultExtended">
+		select d.*,u.name as ownername
+		from
+		devdeployment d,users u
+		where
+		d.proddeploymentid=#prodDeploymentId#
+		and d.deleted=0
+		and
+		u.id=d.ownerid
+		order by d.id desc
+	</select>
+	<select id="getDevDeploymentByName" parameterClass="DevDeployment"
+		resultMap="DevDeploymentResultFull">
+		select * from devdeployment where name=#name# and
+		deleted=0
+	</select>
+	<select id="getNotDeployedDevDeployments" parameterClass="DevDeployment"
+		resultMap="DevDeploymentResultFull">
+		select * from devdeployment where
+		proddeploymentid=#prodDeploymentId# and deployed=0 and deleted=0
+	</select>
+	<select id="getDevDeployment" parameterClass="DevDeployment"
+		resultMap="DevDeploymentResultFull">
+		select * from devdeployment where
+		id=#id#
+		and deleted=0
+	</select>
+	<select id="getLastDeployedDateOfOtherUserOfComponent" parameterClass="java.util.HashMap"
+		resultMap="DevDeploymentResultExtended">
+		select
+		dev.*,u.name as ownername
+		from devdeploymenttree component,
+		devdeployment dev,
+		users u
+		where component.deleted=0
+		and component.name=#component#
+		and dev.deploydate is not null
+		and dev.id=component.devdeploymentid
+		and dev.deleted=0
+		and dev.deployed=1
+		and dev.ownerid<![CDATA[ <> ]]>#ownerid#
+		and u.id=dev.ownerid
+		and dev.deploydate=(
+		select MAX(devin.deploydate)
+		from devdeploymenttree componentin,
+		devdeployment devin
+		where componentin.deleted=0
+		and componentin.name=#component#
+		and devin.deploydate is not null
+		and devin.id=componentin.devdeploymentid
+		and devin.deleted=0
+		and devin.deployed=1
+		and devin.ownerid<![CDATA[ <> ]]>#ownerid#
+		)
+	</select>	
+	<insert id="addDevDeployment" parameterClass="DevDeployment">
+		<selectKey keyProperty="id" type="post" resultClass="int">
+			SELECT
+			LAST_INSERT_ID() AS value
+		</selectKey>
+		INSERT INTO
+		devdeployment(name,proddeploymentid,ownerid,date)
+		VALUES(
+		#name#,#prodDeploymentId#,#ownerId#,#date#)
+	</insert>
+	<update id="deleteDevDeployment" parameterClass="DevDeployment">
+		UPDATE
+		devdeployment set deleted=1 WHERE id=#id#
+	</update>
+	<update id="updateDevDeployment" parameterClass="DevDeployment">
+		UPDATE
+		devdeployment set name=#name#
+		WHERE id=#id#
+	</update>
+	<update id="deployDevDeployment" parameterClass="DevDeployment">
+		UPDATE
+		devdeployment set deployed=#deployed#,deploydate=now()
+		WHERE id=#id#
+	</update>
+	<update id="undeployDevDeployment" parameterClass="DevDeployment">
+		UPDATE
+		devdeployment set deployed=#deployed#,deploydate=null
+		WHERE id=#id#
+	</update>
+</sqlMap>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProdDeploymentTree">
+	<cacheModel id="ProdDeploymentTreeCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="ProdDeploymentTree"
+		type="com.deploymentplan.domain.ProdDeploymentTree" />
+	<resultMap id="TreeResultProd" class="ProdDeploymentTree">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="parentId" column="parentid" />
+	</resultMap>
+	<resultMap id="ProdDeploymentTreeResultFull" class="ProdDeploymentTree">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="parentId" column="parentid" />
+		<result property="prodDeploymentId" column="proddeploymentid" />
+		<result property="itemType" column="itemtype" />
+		<result property="deleted" column="deleted" />
+	</resultMap>
+	<resultMap id="GridResult" class="ProdDeploymentTree">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>
+	<select id="refreshBusyComponents" resultClass="java.util.HashMap">
+		select pdt.name as component,CONVERT(count(*),char(2)) as numberofprojects from
+		proddeploymenttree pdt,
+		proddeployment prod
+		where pdt.deleted=0
+		and pdt.itemtype=1
+		and prod.id=pdt.proddeploymentid
+		and prod.deployed=0
+		 GROUP BY pdt.name
+		 ORDER BY numberofprojects DESC
+	</select>	
+	<select id="getBusyComponentsProjects" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT prod.name as project,u.name as username,CONVERT(SUM(case when dev.deployed=0 then 1 else 0 end),char(2)) as undeployeddev,
+		CONVERT(SUM(case when dev.deployed=1 then 1 else 0 end),char(2)) as deployeddev,
+		( SELECT CONVERT(COUNT(*),char(2)) FROM DEVDEPLOYMENT dev1,DEVDEPLOYMENTTREE devtree 
+			WHERE dev1.proddeploymentid=prod.id 
+			and dev1.deployed=1
+			and dev1.deleted=0 
+			and devtree.devdeploymentid=dev1.id 
+			and devtree.name=prodtree.name 
+			and devtree.deleted=0)  as compdeployed,
+		( SELECT CONVERT(COUNT(*),char(2)) FROM DEVDEPLOYMENT dev1,DEVDEPLOYMENTTREE devtree 
+			WHERE dev1.proddeploymentid=prod.id 
+			and dev1.deployed=0
+			and dev1.deleted=0 
+			and devtree.devdeploymentid=dev1.id 
+			and devtree.name=prodtree.name 
+			and devtree.deleted=0)  as compnotdeployed			  
+		FROM 
+		proddeploymenttree prodtree,
+		proddeployment prod,
+		devdeployment dev,
+		users u
+		WHERE prodtree.name=#component#
+		and prodtree.deleted=0
+		and prodtree.itemtype=1
+		and prod.id=prodtree.proddeploymentid
+		and prod.deleted=0
+		and prod.deployed=0
+		and dev.proddeploymentid=prod.id
+		and dev.deleted=0
+		and u.id=prod.ownerid
+		GROUP BY prod.name,u.name
+	</select>		
+	<select id="getBulkDeploymentDependentProjectsFormatted" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT CONVERT(prod.id,char(5)) as prodid,prod.name as project,u.name as username,
+		CONVERT(SUM(case when dev.deployed=0 then 1 else 0 end),char(2)) as undeployeddev ,
+		CONVERT(SUM(case when dev.deployed=1 then 1 else 0 end),char(2)) as deployeddev
+		FROM 
+		proddeployment prod,
+		devdeployment dev,
+		users u
+		WHERE prod.id=#prodid#
+		and prod.deleted=0
+		and prod.deployed=0
+		and dev.proddeploymentid=prod.id
+		and dev.deleted=0
+		and u.id=prod.ownerid
+		GROUP BY prod.name,u.name
+	</select>	
+	<select id="generateKYSCommentForProd" parameterClass="ProdDeploymentTree"
+		resultClass="java.lang.String">
+		select DISTINCT CONCAT('[',prod.name,']') from
+		proddeploymenttree
+		p,proddeploymenttree component,devdeployment dev,proddeployment prod
+		where p.id=#id#
+		and p.deleted=0
+		and p.itemtype=1
+		and component.name=p.name
+		and component.deleted=0
+		and component.itemtype=1
+		and dev.proddeploymentid=component.proddeploymentid
+		and dev.deleted=0
+		and dev.deployed=1
+		and prod.id=component.proddeploymentid
+		and prod.deleted=0
+		and prod.deployed=0
+	</select>
+	<select id="getProdDeploymentTree" parameterClass="ProdDeploymentTree"
+		resultMap="ProdDeploymentTreeResultFull">
+		SELECT * from proddeploymenttree 
+		where id=#id#
+		and
+		deleted=0
+	</select>
+	<select id="getProdDeploymentTreeList" parameterClass="ProdDeploymentTree"
+		resultClass="java.util.HashMap">
+		select dtree.*,
+		CAST(( SELECT COUNT(*) FROM proddeploymenttree item,
+proddeployment prod,
+proddeploymenttree item2,
+proddeployment prod2
+WHERE item.id=dtree.id
+and item.deleted=0
+and item.itemtype=3
+and prod.id=item.proddeploymentid
+and prod.deleted=0
+and prod.deployed=0
+and item2.name=item.name
+and item2.deleted=0
+and item2.id<![CDATA[ <> ]]>item.id
+and item2.itemtype=3
+and prod2.id=item2.proddeploymentid
+and prod2.deleted=0
+and prod2.deployed=0 
+and prod.id<![CDATA[ <> ]]>prod2.id
+) AS CHAR) as conflict
+ from proddeploymenttree dtree
+		where
+		proddeploymentid=#prodDeploymentId#
+		and deleted=0
+	</select>
+	<select id="getComponents" parameterClass="ProdDeploymentTree"
+		resultClass="java.lang.String">
+		select DISTINCT name from proddeploymenttree where
+		itemtype=1
+		and deleted=0
+		order by name asc
+	</select>
+	<select id="getItems" parameterClass="ProdDeploymentTree"
+		resultClass="java.lang.String">
+		select DISTINCT item.name
+		from proddeploymenttree item
+		,proddeploymenttree
+		itemtype,proddeploymenttree component
+		where
+		item.itemtype=3
+		and item.deleted=0
+		and itemtype.id=item.parentid
+		and
+		itemtype.itemtype=2
+		and itemtype.subitemtype=#subItemType#
+		and
+		itemtype.deleted=0
+		and component.id=itemtype.parentid
+		and
+		component.itemtype=1
+		and component.name=#name#
+		and component.deleted=0
+		order by item.name asc
+	</select>
+	<select id="getProdDeploymentTreeInSameDeployment"
+		parameterClass="ProdDeploymentTree" resultMap="ProdDeploymentTreeResultFull">
+		select * from
+		proddeploymenttree
+		where proddeploymentid=#prodDeploymentId#
+		and
+		name=#name#
+		and parentid=#parentId#
+		and deleted=0
+		order by name asc
+	</select>
+	<select id="getProdChildItems" parameterClass="ProdDeploymentTree"
+		resultMap="ProdDeploymentTreeResultFull">
+		select * from proddeploymenttree where parentid=#id# and
+		deleted=0 
+	</select>
+	<insert id="insertProdDeploymentTree" parameterClass="ProdDeploymentTree">
+		<selectKey keyProperty="id" type="post" resultClass="int">
+			SELECT
+			LAST_INSERT_ID() AS value
+		</selectKey>
+		INSERT INTO
+		proddeploymenttree(name,proddeploymentid,parentId,itemtype,subitemtype,datetime)
+		VALUES(
+		#name#,#prodDeploymentId#,#parentId#,#itemType#,#subItemType#,now())
+	</insert>
+	<update id="deleteProdDeploymentTree" parameterClass="ProdDeploymentTree">
+		UPDATE
+		proddeploymenttree set deleted=1 WHERE id=#id#
+	</update>
+</sqlMap>

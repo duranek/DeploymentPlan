@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DeployItemTypes">
+	<cacheModel id="deployItemTypesCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="deployItemTypes" type="com.deploymentplan.domain.DeployItemTypes" />
+	<resultMap id="DeployItemTypesResultFull" class="DeployItemTypes">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>	
+	<select id="getDeployItemTypes" parameterClass="DeployItemTypes" resultMap="DeployItemTypesResultFull">
+		select id,name from deployitemtypes order by name asc
+	</select>
+</sqlMap>

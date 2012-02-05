@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProdStatus">
+	<cacheModel id="ProdStatusCache" type="LRU">
+		<flushInterval hours="24" />
+		<property name="size" value="1000" />
+	</cacheModel>
+	<typeAlias alias="ProdStatus" type="com.deploymentplan.domain.ProdStatus" />
+	<resultMap id="ProdStatusResultFull" class="ProdStatus">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+	</resultMap>	
+	<select id="refreshProdStatus" parameterClass="ProdStatus" resultMap="ProdStatusResultFull">
+		select id,name from prodstatus order by name asc
+	</select>
+</sqlMap>
